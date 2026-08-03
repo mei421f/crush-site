@@ -29,7 +29,7 @@
 <main class="wrap">
   <div class="card" id="card">
 
-    <div class="progress" id="progress" aria-hidden="true">
+    <div class="progress hidden" id="progress" aria-hidden="true">
       <span class="dot active" data-step="1"></span>
       <span class="line"></span>
       <span class="dot" data-step="2"></span>
@@ -37,8 +37,25 @@
       <span class="dot" data-step="3"></span>
     </div>
 
+    <!-- مرحله‌ی صفر: بازی «چقدر همو می‌شناسیم» (فقط اگه از پنل ادمین فعال شده باشه) -->
+    <section class="stage active" id="stage-quiz">
+      <p class="eyebrow">قبلش یه بازی کوچولو</p>
+      <div class="orb-wrap">
+        <div class="orb orb-rose"></div>
+        <svg viewBox="0 0 24 24" class="stage-icon heart-icon">
+          <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M9.2 9.6c.2-1.6 1.4-2.6 2.9-2.6 1.5 0 2.7 1 2.7 2.3 0 1.1-.6 1.7-1.6 2.3-.9.6-1.3 1-1.3 1.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+          <circle cx="12" cy="16.6" r="1" fill="currentColor"/>
+        </svg>
+      </div>
+      <h1 id="quiz-question">در حال بارگذاری...</h1>
+      <p class="submsg" id="quiz-progress-text"></p>
+      <div class="quiz-options" id="quiz-options"></div>
+      <p class="quiz-feedback" id="quiz-feedback"></p>
+    </section>
+
     <!-- مرحله ۱: سؤال اصلی -->
-    <section class="stage active" id="stage-question">
+    <section class="stage" id="stage-question">
       <p class="eyebrow" id="eyebrow">برای یه نفر خاص</p>
       <div class="orb-wrap">
         <div class="orb orb-rose"></div>

@@ -155,6 +155,14 @@ if (!reduceMotion) {
   for (let i = 0; i < 4; i++) setTimeout(spawnHeart, i * 300);
 }
 
+// ---------- لینک اختصاصی: ?to=اسم ----------
+// اگه لینک با ?to=اسم باز بشه، همون‌جا رو نمایش و پیام‌های تلگرام اولویت داره؛
+// این‌طوری میشه از یه دیپلوی، لینک‌های شخصی‌سازی‌شده برای چند نفر مختلف ساخت
+const urlToName = (new URLSearchParams(location.search).get('to') || '').trim();
+function getRecipientName() {
+  return urlToName || currentConfig.name || '';
+}
+
 // ---------- بارگذاری تنظیمات از سرور ----------
 let currentConfig = {};
 async function loadConfig() {
@@ -169,16 +177,22 @@ async function loadConfig() {
 }
 
 function renderConfig(cfg) {
-  document.getElementById('eyebrow').textContent = cfg.name ? `برای ${cfg.name}` : 'برای یه نفر خاص';
-  document.getElementById('question-text').textContent = cfg.name ? `${cfg.name} جان، ${cfg.question}` : cfg.question;
+  const displayName = urlToName || cfg.name;
+  document.getElementById('eyebrow').textContent = displayName ? `برای ${displayName}` : 'برای یه نفر خاص';
+  document.getElementById('question-text').textContent = displayName ? `${displayName} جان، ${cfg.question}` : cfg.question;
   document.getElementById('message-text').textContent = cfg.message;
   document.getElementById('date-heading').textContent = cfg.dateHeading || 'بریم یه دیت باحال؟';
   document.getElementById('date-message').textContent = cfg.dateMessage || '';
+  if (!isPreview) setupQuiz(cfg.quiz);
 }
 
 // اگر داخل iframe پیش‌نمایش پنل ادمین باز شده باشه، تایپ زنده رو نشون بده
 const isPreview = new URLSearchParams(location.search).get('preview') === '1';
 if (isPreview) {
+  // پیش‌نمایش همیشه مستقیم سؤال اصلی رو نشون می‌ده، بدون بازی، تا تایپ زنده قابل دیدن باشه
+  document.getElementById('stage-quiz').classList.remove('active');
+  document.getElementById('stage-question').classList.add('active');
+  document.getElementById('progress').classList.remove('hidden');
   window.addEventListener('message', (e) => {
     if (e.data && e.data.type === 'crush-preview') {
       renderConfig({ ...currentConfig, ...e.data.payload });
@@ -200,7 +214,90 @@ function setProgress(step) {
 function goToStage(id, step) {
   document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  document.getElementById('progress').classList.remove('hidden');
   if (step) setProgress(step);
+}
+
+// ---------- بازی «چقدر همو می‌شناسیم» (قبل از سؤال اصلی) ----------
+const quizCorrectMsgs = ['آفرین! دقیقاً همینه 🎉', 'وای بلدی‌ها!', 'صد درصد درست بود ✨', 'یه امتیاز واسه تو!'];
+const quizWrongMsgs = ['نچ، دوباره امتحان کن', 'نزدیک بود ولی نه :)', 'یه بار دیگه فکر کن', 'اینو نه، یکی دیگه رو بزن'];
+let quizState = { index: 0, questions: [] };
+
+function setupQuiz(quizCfg) {
+  const quizStage = document.getElementById('stage-quiz');
+  const enabled = quizCfg?.enabled && Array.isArray(quizCfg.questions) && quizCfg.questions.length > 0;
+  if (!enabled) {
+    // بدون بازی: مستقیم برو سراغ سؤال اصلی
+    quizStage.classList.remove('active');
+    document.getElementById('stage-question').classList.add('active');
+    document.getElementById('progress').classList.remove('hidden');
+    return;
+  }
+  document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
+  quizStage.classList.add('active');
+  document.getElementById('progress').classList.add('hidden');
+  quizState = { index: 0, questions: quizCfg.questions };
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion() {
+  const q = quizState.questions[quizState.index];
+  document.getElementById('quiz-question').textContent = q.q;
+  document.getElementById('quiz-progress-text').textContent = `سؤال ${quizState.index + 1} از ${quizState.questions.length}`;
+  document.getElementById('quiz-feedback').textContent = '';
+  document.getElementById('quiz-feedback').className = 'quiz-feedback';
+  const optsWrap = document.getElementById('quiz-options');
+  optsWrap.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'quiz-opt';
+    btn.textContent = opt;
+    btn.addEventListener('click', () => handleQuizAnswer(i, btn));
+    optsWrap.appendChild(btn);
+  });
+}
+
+function handleQuizAnswer(i, btn) {
+  const q = quizState.questions[quizState.index];
+  const feedback = document.getElementById('quiz-feedback');
+  if (i === q.correctIndex) {
+    document.querySelectorAll('.quiz-opt').forEach(b => { b.disabled = true; });
+    btn.classList.add('correct');
+    feedback.textContent = quizCorrectMsgs[Math.floor(Math.random() * quizCorrectMsgs.length)];
+    feedback.className = 'quiz-feedback good';
+    playTone(700, 0.1);
+    setTimeout(() => {
+      quizState.index++;
+      if (quizState.index < quizState.questions.length) {
+        renderQuizQuestion();
+      } else {
+        finishQuiz();
+      }
+    }, 850);
+  } else {
+    btn.classList.add('wrong');
+    feedback.textContent = quizWrongMsgs[Math.floor(Math.random() * quizWrongMsgs.length)];
+    feedback.className = 'quiz-feedback bad';
+    playTone(180, 0.15, 'triangle');
+    setTimeout(() => btn.classList.remove('wrong'), 450);
+  }
+}
+
+function finishQuiz() {
+  document.getElementById('quiz-question').textContent = 'قبول شدی! خیلی خوب می‌شناسیم همو 🎉';
+  document.getElementById('quiz-progress-text').textContent = '';
+  document.getElementById('quiz-feedback').textContent = '';
+  const optsWrap = document.getElementById('quiz-options');
+  optsWrap.innerHTML = '';
+  const goBtn = document.createElement('button');
+  goBtn.type = 'button';
+  goBtn.className = 'btn btn-primary full';
+  goBtn.textContent = 'برو سراغ سؤال اصلی';
+  goBtn.addEventListener('click', () => goToStage('stage-question', 1));
+  optsWrap.appendChild(goBtn);
+  launchConfetti();
+  playChord();
 }
 
 // ---------- دکمه "نه" که فرار می‌کند + پیام‌های شیطنت‌آمیز ----------
@@ -239,7 +336,13 @@ document.getElementById('yesBtn').addEventListener('click', async () => {
   goToStage('stage-date', 2);
   launchConfetti();
   playChord();
-  try { await fetch('/api/yes', { method: 'POST' }); } catch (e) {}
+  try {
+    await fetch('/api/yes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: getRecipientName() }),
+    });
+  } catch (e) {}
 });
 
 // ---------- بخش دعوت به دیت ----------
@@ -263,7 +366,7 @@ dateLaterBtn.addEventListener('click', async () => {
     await fetch('/api/date-response', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accepted: false }),
+      body: JSON.stringify({ accepted: false, name: getRecipientName() }),
     });
   } catch (e) {}
 });
@@ -282,7 +385,7 @@ dateForm.addEventListener('submit', async (e) => {
     const res = await fetch('/api/date-response', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accepted: true, day, time, note }),
+      body: JSON.stringify({ accepted: true, day, time, note, name: getRecipientName() }),
     });
     const data = await res.json();
     finalTitle.textContent = 'درخواستت ثبت شد!';

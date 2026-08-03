@@ -28,11 +28,31 @@ app.get('/', (req, res) => {
     return res.status(410).sendFile(path.join(__dirname, 'public', 'expired.html'));
   }
   cfg.access.visitCount = (cfg.access.visitCount || 0) + 1;
+
+  // اعلان لحظه‌ای: فقط اگه تلگرام تنظیم شده و بازه‌ی خنک‌سازی رد شده باشه
+  // (تا رفرش‌های پشت‌سرهم چند بار پشت‌هم بهت پیام ندن)
+  const lastNotified = cfg.access.lastOpenNotifiedAt ? new Date(cfg.access.lastOpenNotifiedAt).getTime() : 0;
+  const shouldNotify = cfg.notifyOnOpen !== false
+    && cfg.telegram?.botToken && cfg.telegram?.chatId
+    && (Date.now() - lastNotified > NOTIFY_COOLDOWN_MS);
+
+  if (shouldNotify) cfg.access.lastOpenNotifiedAt = new Date().toISOString();
   writeConfig(cfg);
+
+  // جواب رو فوری بفرست، بعد (بدون منتظر موندن) پیام تلگرام رو در پس‌زمینه بفرست
+  // تا اعلان باعث کندی باز شدن صفحه برای طرف نشه
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+
+  if (shouldNotify) {
+    const who = (req.query.to && String(req.query.to).trim()) || cfg.name || 'یکی';
+    sendTelegram(cfg.telegram.botToken, cfg.telegram.chatId, `👀 ${who} لینک رو باز کرد! (بازدید #${cfg.access.visitCount})\nهنوز جواب نداده -- فعلاً فقط بازش کرده`)
+      .catch(() => {});
+  }
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
+
+const NOTIFY_COOLDOWN_MS = 30 * 1000; // برای جلوگیری از اسپم تلگرام روی رفرش‌های پشت‌سرهم
 
 function ensureDataFile() {
   const dir = path.dirname(DATA_FILE);
@@ -44,6 +64,15 @@ function ensureDataFile() {
       question: 'میشه مال من بشی؟',
       dateHeading: 'بریم یه دیت باحال؟',
       dateMessage: 'یه جای خوب سراغ دارم، فقط بگو کی و کجا برات خوبه',
+      notifyOnOpen: true,
+      quiz: {
+        enabled: true,
+        questions: [
+          { q: 'اولین باری که همو دیدیم کجا بود؟', options: ['دانشگاه', 'مهمونی یه دوست', 'کافه', 'آنلاین'], correctIndex: 1 },
+          { q: 'غذای مورد علاقه‌م چیه؟', options: ['پیتزا', 'قرمه‌سبزی', 'سوشی', 'کباب'], correctIndex: 1 },
+          { q: 'اگه یه روز تعطیل بی‌برنامه داشته باشم، چیکار می‌کنم؟', options: ['فیلم می‌بینم', 'میرم بیرون', 'می‌خوابم', 'کتاب می‌خونم'], correctIndex: 2 }
+        ]
+      },
       telegram: {
         botToken: process.env.TELEGRAM_BOT_TOKEN || '',
         chatId: process.env.TELEGRAM_CHAT_ID || ''
@@ -51,7 +80,8 @@ function ensureDataFile() {
       access: {
         expiresAt: null,
         maxVisits: null,
-        visitCount: 0
+        visitCount: 0,
+        lastOpenNotifiedAt: null
       }
     }, null, 2));
   }
@@ -61,7 +91,10 @@ ensureDataFile();
 function readConfig() {
   ensureDataFile();
   const cfg = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
-  if (!cfg.access) cfg.access = { expiresAt: null, maxVisits: null, visitCount: 0 };
+  if (!cfg.access) cfg.access = { expiresAt: null, maxVisits: null, visitCount: 0, lastOpenNotifiedAt: null };
+  if (cfg.access.lastOpenNotifiedAt === undefined) cfg.access.lastOpenNotifiedAt = null;
+  if (!cfg.quiz) cfg.quiz = { enabled: false, questions: [] };
+  if (cfg.notifyOnOpen === undefined) cfg.notifyOnOpen = true;
   return cfg;
 }
 
@@ -96,7 +129,8 @@ app.post('/api/admin/config', (req, res) => {
 app.post('/api/config', (req, res) => {
   const {
     password, name, message, question, dateHeading, dateMessage,
-    telegramBotToken, telegramChatId, accessExpiresAt, accessMaxVisits
+    telegramBotToken, telegramChatId, accessExpiresAt, accessMaxVisits,
+    notifyOnOpen, quiz
   } = req.body;
   if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'رمز اشتباهه' });
 
@@ -107,6 +141,17 @@ app.post('/api/config', (req, res) => {
     question: question?.trim() || current.question,
     dateHeading: dateHeading?.trim() || current.dateHeading,
     dateMessage: dateMessage?.trim() || current.dateMessage,
+    notifyOnOpen: notifyOnOpen !== undefined ? Boolean(notifyOnOpen) : current.notifyOnOpen,
+    quiz: quiz !== undefined ? {
+      enabled: Boolean(quiz.enabled),
+      questions: Array.isArray(quiz.questions) ? quiz.questions
+        .filter(q => q && q.q && Array.isArray(q.options) && q.options.length >= 2)
+        .map(q => ({
+          q: String(q.q).trim(),
+          options: q.options.map(o => String(o).trim()).filter(Boolean),
+          correctIndex: Number.isInteger(q.correctIndex) ? q.correctIndex : 0
+        })) : []
+    } : current.quiz,
     telegram: {
       botToken: telegramBotToken !== undefined ? telegramBotToken.trim() : current.telegram?.botToken || '',
       chatId: telegramChatId !== undefined ? telegramChatId.trim() : current.telegram?.chatId || ''
@@ -114,7 +159,8 @@ app.post('/api/config', (req, res) => {
     access: {
       expiresAt: accessExpiresAt !== undefined ? (accessExpiresAt || null) : current.access?.expiresAt || null,
       maxVisits: accessMaxVisits !== undefined ? (accessMaxVisits ? Number(accessMaxVisits) : null) : current.access?.maxVisits || null,
-      visitCount: current.access?.visitCount || 0
+      visitCount: current.access?.visitCount || 0,
+      lastOpenNotifiedAt: current.access?.lastOpenNotifiedAt || null
     }
   };
   writeConfig(updated);
@@ -157,17 +203,19 @@ app.post('/api/admin/test-telegram', async (req, res) => {
 
 // ثبت پاسخ "بله" به سؤال اصلی
 app.post('/api/yes', (req, res) => {
-  console.log(`🎉 ${new Date().toISOString()} - جواب بله دریافت شد!`);
+  const { name } = req.body || {};
+  console.log(`🎉 ${new Date().toISOString()} - جواب بله دریافت شد!${name ? ' (' + name + ')' : ''}`);
   res.json({ success: true });
 });
 
 // درخواست دیت -> ارسال پیام به تلگرام
 app.post('/api/date-response', async (req, res) => {
-  const { accepted, day, time, note } = req.body;
+  const { accepted, day, time, note, name } = req.body;
   const cfg = readConfig();
   const { botToken, chatId } = cfg.telegram || {};
+  const who = name ? `${name} ` : '';
 
-  console.log(`💌 درخواست دیت: accepted=${accepted}, day=${day}, time=${time}, note=${note}`);
+  console.log(`💌 درخواست دیت: accepted=${accepted}, day=${day}, time=${time}, note=${note}, name=${name}`);
 
   if (!accepted) {
     return res.json({ success: true, telegramSent: false });
@@ -179,7 +227,7 @@ app.post('/api/date-response', async (req, res) => {
   }
 
   const text = [
-    '💘 خبر خوب! درخواست دیت تایید شد!',
+    `💘 خبر خوب! ${who}درخواست دیت رو تایید کرد!`,
     day ? `📅 روز پیشنهادی: ${day}` : null,
     time ? `⏰ ساعت پیشنهادی: ${time}` : null,
     note ? `📝 یادداشت: ${note}` : null,

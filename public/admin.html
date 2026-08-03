@@ -113,6 +113,20 @@
   .link-row { display:flex; gap: 8px; margin-top: 10px; }
   .link-row input { flex: 1; font-size: 0.82rem; color: var(--ink-soft); }
   .link-row button { width: auto; margin-top: 0; padding: 10px 14px; font-size: 0.82rem; }
+  .hidden { display: none !important; }
+
+  .quiz-q {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .quiz-q-top { display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px; }
+  .quiz-q-top strong { font-size: 0.85rem; }
+  .quiz-q-top button { width: auto; margin: 0; padding: 4px 10px; font-size: 0.72rem; }
+  .quiz-opt-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .quiz-opt-row input[type="radio"] { width: auto; flex: none; }
+  .quiz-opt-row input[type="text"] { flex: 1; }
 
   /* پیش‌نمایش موبایل */
   .preview-panel { position: sticky; top: 20px; }
@@ -152,6 +166,7 @@
     <div class="tabs">
       <button class="tab-btn active" data-tab="message">پیام اصلی</button>
       <button class="tab-btn" data-tab="date">دعوت به دیت</button>
+      <button class="tab-btn" data-tab="quiz">بازی</button>
       <button class="tab-btn" data-tab="telegram">تلگرام</button>
       <button class="tab-btn" data-tab="access">دسترسی</button>
     </div>
@@ -175,6 +190,16 @@
       <textarea id="dateMessage" placeholder="یه جای خوب سراغ دارم، فقط بگو کی و کجا برات خوبه"></textarea>
     </div>
 
+    <div class="tab-panel" id="tab-quiz">
+      <div class="hint" style="display:flex; align-items:center; justify-content:space-between; background:var(--surface-2); padding:12px 14px; border-radius:12px; margin-bottom:16px;">
+        <span>قبل از سؤال اصلی، یه بازی «چقدر همو می‌شناسیم» نشون بده</span>
+        <input type="checkbox" id="quizEnabled" style="width:auto;">
+      </div>
+      <div id="quizQuestions"></div>
+      <button type="button" class="secondary" id="addQuizQBtn" style="margin-top:4px;">+ سؤال جدید</button>
+      <p class="hint">برای هر سؤال، گزینه‌ی درست رو با دایره‌ی کنارش انتخاب کن. گزینه‌های خالی نادیده گرفته می‌شن.</p>
+    </div>
+
     <div class="tab-panel" id="tab-telegram">
       <label>Bot Token</label>
       <input type="text" id="telegramBotToken" placeholder="123456:ABC-DEF...">
@@ -185,6 +210,11 @@
         از @BotFather یه ربات بساز و توکنش رو بگیر. برای Chat ID به ربات پیام بده و از @userinfobot آی‌دی چتت رو پیدا کن.
       </p>
       <button type="button" class="secondary" id="testTgBtn" style="margin-top:14px;">ارسال پیام آزمایشی</button>
+
+      <div class="hint" style="display:flex; align-items:center; justify-content:space-between; margin-top:16px; background:var(--surface-2); padding:12px 14px; border-radius:12px;">
+        <span>وقتی طرف لینک رو باز کرد (حتی قبل از جواب دادن)، فوری بهم پیام بده</span>
+        <input type="checkbox" id="notifyOnOpen" style="width:auto;">
+      </div>
     </div>
 
     <div class="tab-panel" id="tab-access">
@@ -208,6 +238,17 @@
       <input type="text" id="publicLink" readonly>
       <button type="button" class="secondary" id="copyLinkBtn">کپی لینک</button>
     </div>
+
+    <label style="margin-top:18px;">لینک اختصاصی با اسم <span style="color:var(--ink-faint); font-weight:400;">(اختیاری)</span></label>
+    <div class="link-row">
+      <input type="text" id="toName" placeholder="مثلاً نیلوفر">
+      <button type="button" class="secondary" id="genLinkBtn">ساخت لینک</button>
+    </div>
+    <div class="link-row hidden" id="toLinkRow">
+      <input type="text" id="toLink" readonly>
+      <button type="button" class="secondary" id="copyToLinkBtn">کپی</button>
+    </div>
+    <p class="hint">با این لینک، اسمی که اینجا می‌نویسی تو صفحه و تو پیام‌های تلگرام نشون داده می‌شه -- حتی اگه با «اسم طرف» تو تب پیام اصلی فرق داشته باشه. یعنی از یه دیپلوی میشه چند لینک شخصی‌سازی‌شده برای چند نفر مختلف ساخت.</p>
   </div>
 
   <div class="preview-panel">
@@ -238,6 +279,56 @@ function localInputToIso(val) {
 
 document.getElementById('publicLink').value = location.origin + '/';
 
+// --- ویرایشگر بازی ---
+let quizData = [];
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function renderQuizEditor() {
+  const wrap = document.getElementById('quizQuestions');
+  wrap.innerHTML = '';
+  quizData.forEach((q, qi) => {
+    const row = document.createElement('div');
+    row.className = 'quiz-q';
+    row.innerHTML = `
+      <div class="quiz-q-top">
+        <strong>سؤال ${qi + 1}</strong>
+        <button type="button" class="secondary remove-q" data-qi="${qi}">حذف</button>
+      </div>
+      <input type="text" class="q-text" data-qi="${qi}" placeholder="متن سؤال" value="${escapeHtml(q.q)}">
+    `;
+    const optsWrap = document.createElement('div');
+    (q.options.length ? q.options : ['', '', '', '']).forEach((opt, oi) => {
+      const optRow = document.createElement('div');
+      optRow.className = 'quiz-opt-row';
+      optRow.innerHTML = `
+        <input type="radio" name="correct-${qi}" class="opt-correct" data-qi="${qi}" data-oi="${oi}" ${q.correctIndex === oi ? 'checked' : ''}>
+        <input type="text" class="opt-text" data-qi="${qi}" data-oi="${oi}" placeholder="گزینه ${oi + 1}" value="${escapeHtml(opt)}">
+      `;
+      optsWrap.appendChild(optRow);
+    });
+    row.appendChild(optsWrap);
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll('.remove-q').forEach(btn => btn.addEventListener('click', () => {
+    quizData.splice(Number(btn.dataset.qi), 1);
+    renderQuizEditor();
+  }));
+  wrap.querySelectorAll('.q-text').forEach(inp => inp.addEventListener('input', () => {
+    quizData[Number(inp.dataset.qi)].q = inp.value;
+  }));
+  wrap.querySelectorAll('.opt-text').forEach(inp => inp.addEventListener('input', () => {
+    quizData[Number(inp.dataset.qi)].options[Number(inp.dataset.oi)] = inp.value;
+  }));
+  wrap.querySelectorAll('.opt-correct').forEach(inp => inp.addEventListener('change', () => {
+    quizData[Number(inp.dataset.qi)].correctIndex = Number(inp.dataset.oi);
+  }));
+}
+document.getElementById('addQuizQBtn').addEventListener('click', () => {
+  quizData.push({ q: '', options: ['', '', '', ''], correctIndex: 0 });
+  renderQuizEditor();
+});
+
 // --- تب‌ها ---
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -257,6 +348,21 @@ passwordInput.addEventListener('change', () => sessionStorage.setItem('crush-adm
 document.getElementById('copyLinkBtn').addEventListener('click', async () => {
   await navigator.clipboard.writeText(document.getElementById('publicLink').value);
   const btn = document.getElementById('copyLinkBtn');
+  const old = btn.textContent;
+  btn.textContent = 'کپی شد ✓';
+  setTimeout(() => btn.textContent = old, 1500);
+});
+
+// --- لینک اختصاصی با اسم ---
+document.getElementById('genLinkBtn').addEventListener('click', () => {
+  const name = document.getElementById('toName').value.trim();
+  if (!name) return;
+  document.getElementById('toLink').value = location.origin + '/?to=' + encodeURIComponent(name);
+  document.getElementById('toLinkRow').classList.remove('hidden');
+});
+document.getElementById('copyToLinkBtn').addEventListener('click', async () => {
+  await navigator.clipboard.writeText(document.getElementById('toLink').value);
+  const btn = document.getElementById('copyToLinkBtn');
   const old = btn.textContent;
   btn.textContent = 'کپی شد ✓';
   setTimeout(() => btn.textContent = old, 1500);
@@ -291,9 +397,17 @@ document.getElementById('loadBtn').addEventListener('click', async () => {
     fields.forEach(f => { if (document.getElementById(f)) document.getElementById(f).value = data[f] || ''; });
     document.getElementById('telegramBotToken').value = data.telegram?.botToken || '';
     document.getElementById('telegramChatId').value = data.telegram?.chatId || '';
+    document.getElementById('notifyOnOpen').checked = data.notifyOnOpen !== false;
     document.getElementById('accessExpiresAt').value = isoToLocalInput(data.access?.expiresAt);
     document.getElementById('accessMaxVisits').value = data.access?.maxVisits || '';
     document.getElementById('visitCountLabel').textContent = data.access?.visitCount || 0;
+    document.getElementById('quizEnabled').checked = !!data.quiz?.enabled;
+    quizData = (data.quiz?.questions || []).map(q => ({
+      q: q.q || '',
+      options: q.options && q.options.length ? q.options : ['', '', '', ''],
+      correctIndex: q.correctIndex || 0
+    }));
+    renderQuizEditor();
     sessionStorage.setItem('crush-admin-pass', password);
     statusEl.textContent = '✅ بارگذاری شد';
     statusEl.style.color = '#2fb350';
@@ -311,8 +425,20 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   fields.forEach(f => { body[f] = document.getElementById(f).value; });
   body.telegramBotToken = document.getElementById('telegramBotToken').value;
   body.telegramChatId = document.getElementById('telegramChatId').value;
+  body.notifyOnOpen = document.getElementById('notifyOnOpen').checked;
   body.accessExpiresAt = localInputToIso(document.getElementById('accessExpiresAt').value);
   body.accessMaxVisits = document.getElementById('accessMaxVisits').value;
+  body.quiz = {
+    enabled: document.getElementById('quizEnabled').checked,
+    questions: quizData.map(q => {
+      const opts = (q.options || []).map(o => (o || '').trim()).filter(Boolean);
+      if (!q.q || !q.q.trim() || opts.length < 2) return null;
+      const correctText = (q.options || [])[q.correctIndex];
+      let correctIndex = opts.indexOf((correctText || '').trim());
+      if (correctIndex < 0) correctIndex = 0;
+      return { q: q.q.trim(), options: opts, correctIndex };
+    }).filter(Boolean)
+  };
 
   statusEl.textContent = 'در حال ذخیره...';
   statusEl.style.color = 'var(--ink-soft)';
