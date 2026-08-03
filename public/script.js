@@ -36,20 +36,31 @@ soundBtn.addEventListener('click', () => {
 });
 
 let audioCtx;
-function playTone(freq, duration, type = 'sine') {
+// روی Safari موبایل (iOS)، بعد از new AudioContext() وضعیتش "suspended"
+// می‌مونه تا وقتی resume() کامل تموم بشه. resume() یه Promise هست و اگه
+// بلافاصله بعدش (بدون صبر کردن) osc.start() صدا زده بشه، اوسیلاتور توی یه
+// کانتکست هنوز-معلق پخش میشه و عملاً هیچ صدایی شنیده نمیشه -- برخلاف
+// کروم دسکتاپ که این حالت رو نادیده می‌گیره و صدا رو پخش می‌کنه.
+async function ensureAudioCtx() {
+  audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') {
+    try { await audioCtx.resume(); } catch (e) { /* بی‌صدا رد شو */ }
+  }
+  return audioCtx;
+}
+async function playTone(freq, duration, type = 'sine') {
   if (!soundOn) return;
   try {
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    const ctx = await ensureAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
     osc.type = type;
     osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-    osc.connect(gain).connect(audioCtx.destination);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+    osc.connect(gain).connect(ctx.destination);
     osc.start();
-    osc.stop(audioCtx.currentTime + duration);
+    osc.stop(ctx.currentTime + duration);
   } catch (e) { /* بی‌صدا رد شو */ }
 }
 function playChord() {
@@ -60,31 +71,35 @@ function playChord() {
 
 // ---------- موسیقی ملایم پس‌زمینه (ساخته‌شده با Web Audio، بدون فایل خارجی) ----------
 let ambientNodes = null;
-function startAmbientMusic() {
-  if (ambientNodes || !soundOn || isPreview) return;
+let ambientStarting = false;
+async function startAmbientMusic() {
+  if (ambientNodes || ambientStarting || !soundOn || isPreview) return;
+  ambientStarting = true;
   try {
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const master = audioCtx.createGain();
-    master.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-    master.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 4);
-    master.connect(audioCtx.destination);
+    const ctx = await ensureAudioCtx();
+    // ممکنه در فاصله‌ی صبر برای resume، کاربر صدا رو خاموش کرده باشه
+    if (!soundOn || ambientNodes) { ambientStarting = false; return; }
+
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.0001, ctx.currentTime);
+    master.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 4);
+    master.connect(ctx.destination);
 
     const notes = [261.63, 329.63, 392.0, 523.25]; // C4 E4 G4 C5 - آکورد ماژور نرم
     const voices = notes.map((freq, i) => {
-      const osc = audioCtx.createOscillator();
+      const osc = ctx.createOscillator();
       osc.type = 'sine';
       osc.frequency.value = freq;
-      const gain = audioCtx.createGain();
+      const gain = ctx.createGain();
       gain.gain.value = 0.02;
       osc.connect(gain).connect(master);
       osc.start();
 
       // یه نوسان خیلی کند رو گین هر نُت تا حس تنفس/موج بده
-      const lfo = audioCtx.createOscillator();
+      const lfo = ctx.createOscillator();
       lfo.type = 'sine';
       lfo.frequency.value = 0.045 + i * 0.011;
-      const lfoGain = audioCtx.createGain();
+      const lfoGain = ctx.createGain();
       lfoGain.gain.value = 0.018;
       lfo.connect(lfoGain).connect(gain.gain);
       lfo.start();
@@ -94,6 +109,7 @@ function startAmbientMusic() {
 
     ambientNodes = { master, voices };
   } catch (e) { /* بی‌صدا رد شو */ }
+  ambientStarting = false;
 }
 function stopAmbientMusic() {
   if (!ambientNodes) return;

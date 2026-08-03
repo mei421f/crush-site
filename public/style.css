@@ -369,8 +369,18 @@ body {
 }
 .date-form input[type="date"],
 .date-form input[type="time"] {
-  padding-inline-start: 42px;
+  /* از پدینگ فیزیکی (نه منطقی) استفاده می‌کنیم چون در ادامه direction این اینپوت‌ها
+     رو ltr می‌کنیم؛ اگر از padding-inline-start استفاده می‌شد، با تغییر direction
+     جهتش برعکس می‌شد و فاصله‌ی آیکون از بین می‌رفت */
+  padding-right: 42px;
+  padding-left: 14px;
   position: relative;
+  /* باگ شناخته‌شده‌ی Safari موبایل (iOS): وقتی صفحه dir="rtl" داره، پیکر بومی
+     تاریخ/ساعت مقدارش رو بیرون از باکس یا نامرئی رندر می‌کنه. اجبار به ltr
+     برای خودِ اینپوت (نه کل صفحه) این مشکل رو حل می‌کنه چون تاریخ/ساعت
+     ذاتاً یه فرمت چپ‌به‌راست هست (روز/ماه/سال یا ساعت:دقیقه) */
+  direction: ltr;
+  text-align: right;
 }
 /* آیکون بومی مرورگر رو هم در صورت وجود، در دارک‌مود قابل‌دیدن نگه دار */
 .date-form input[type="date"]::-webkit-calendar-picker-indicator,
