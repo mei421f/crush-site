@@ -49,12 +49,19 @@ const nudgeMessages = [
 ];
 let dodgeCount = 0;
 
+const card = document.getElementById('card');
+
 function dodgeNo() {
-  const rowRect = btnRow.getBoundingClientRect();
+  const cardRect = card.getBoundingClientRect();
   const btnRect = noBtn.getBoundingClientRect();
-  const maxX = Math.max(rowRect.width - btnRect.width, 40);
-  const randX = (Math.random() - 0.5) * maxX * 1.6;
-  const randY = (Math.random() - 0.5) * 70;
+
+  // فضای امن داخل کارت (با کمی حاشیه) تا دکمه هیچ‌وقت از کارت بیرون نزنه
+  const margin = 14;
+  const halfRangeX = Math.max((cardRect.width - btnRect.width) / 2 - margin, 24);
+  const halfRangeY = Math.max(Math.min((cardRect.height - btnRect.height) / 2 - margin, 60), 20);
+
+  const randX = (Math.random() - 0.5) * 2 * halfRangeX;
+  const randY = (Math.random() - 0.5) * 2 * halfRangeY;
   noBtn.style.transform = `translate(${randX}px, ${randY}px)`;
 
   nudge.textContent = nudgeMessages[Math.min(dodgeCount, nudgeMessages.length - 1)];
