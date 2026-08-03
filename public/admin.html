@@ -4,27 +4,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>پنل مدیریت</title>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;800&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin:0; padding:0; font-family:'Vazirmatn',sans-serif; }
   body {
     min-height: 100vh;
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #2b1055, #7597de);
-    padding: 20px;
+    background: radial-gradient(ellipse at top, #2b1055 0%, #12081f 70%);
+    padding: 30px 16px;
   }
   .panel {
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 24px;
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 26px;
     padding: 40px;
-    max-width: 420px;
+    max-width: 460px;
     width: 100%;
     color: #fff;
+    box-shadow: 0 30px 70px rgba(0,0,0,0.4);
   }
-  h1 { text-align:center; margin-bottom: 25px; font-size: 1.4rem; }
-  label { display:block; margin: 16px 0 6px; font-size: 0.9rem; opacity:0.85; }
+  h1 { text-align:center; margin-bottom: 6px; font-size: 1.4rem; }
+  .sub { text-align:center; color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-bottom: 24px;}
+  fieldset { border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 16px; margin-top: 22px; }
+  legend { padding: 0 8px; font-size: 0.85rem; color: #ffb3c6; }
+  label { display:block; margin: 14px 0 6px; font-size: 0.87rem; opacity:0.85; }
+  label:first-child { margin-top: 0; }
   input, textarea {
     width: 100%;
     padding: 12px 14px;
@@ -33,43 +38,77 @@
     background: rgba(255,255,255,0.08);
     color: #fff;
     font-family: inherit;
-    font-size: 0.95rem;
+    font-size: 0.93rem;
     outline: none;
+    color-scheme: dark;
   }
-  textarea { resize: vertical; min-height: 70px; }
-  input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.5); }
+  textarea { resize: vertical; min-height: 60px; }
+  input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.4); }
+  input:focus, textarea:focus { border-color: #ff9ec4; }
   button {
     margin-top: 24px;
     width: 100%;
     padding: 14px;
     border: none;
     border-radius: 14px;
-    background: linear-gradient(135deg, #ff4b6e, #ff8fab);
+    background: linear-gradient(135deg, #ff5c8a, #ff9ec4);
     color: #fff;
     font-weight: 600;
     font-size: 1rem;
     cursor: pointer;
   }
-  #status { text-align:center; margin-top: 14px; font-size: 0.9rem; min-height: 20px; }
-  a.preview-link { display:block; text-align:center; margin-top: 18px; color: #ffb3c6; font-size: 0.85rem; }
+  #status { text-align:center; margin-top: 14px; font-size: 0.88rem; min-height: 20px; }
+  a.preview-link { display:block; text-align:center; margin-top: 18px; color: #ffb3c6; font-size: 0.85rem; text-decoration:none; }
+  .hint { font-size: 0.76rem; color: rgba(255,255,255,0.45); margin-top: 6px; line-height: 1.6; }
+  .load-btn {
+    background: rgba(255,255,255,0.1);
+    margin-top: 0;
+  }
 </style>
 </head>
 <body>
 
 <div class="panel">
-  <h1>💌 پنل مدیریت پیام</h1>
+  <h1>💌 پنل مدیریت</h1>
+  <p class="sub">اینجا محتوای صفحه و تنظیمات تلگرام رو مدیریت کن</p>
 
   <label>رمز ادمین</label>
   <input type="password" id="password" placeholder="رمز عبور">
+  <button class="load-btn" id="loadBtn" type="button">بارگذاری تنظیمات فعلی 🔄</button>
 
-  <label>اسم طرف</label>
-  <input type="text" id="name" placeholder="مثلاً سارا">
+  <fieldset>
+    <legend>پیام اصلی</legend>
+    <label>اسم طرف</label>
+    <input type="text" id="name" placeholder="مثلاً سارا">
 
-  <label>سؤال</label>
-  <input type="text" id="question" placeholder="میشه مال من بشی؟">
+    <label>سؤال</label>
+    <input type="text" id="question" placeholder="میشه مال من بشی؟">
 
-  <label>پیام دلی</label>
-  <textarea id="message" placeholder="یه چیزی هست که مدت‌هاست می‌خوام بهت بگم..."></textarea>
+    <label>پیام دلی</label>
+    <textarea id="message" placeholder="یه چیزی هست که مدت‌هاست می‌خوام بهت بگم..."></textarea>
+  </fieldset>
+
+  <fieldset>
+    <legend>دعوت به دیت</legend>
+    <label>عنوان دعوت</label>
+    <input type="text" id="dateHeading" placeholder="بریم یه دیت باحال؟">
+
+    <label>توضیح کوتاه</label>
+    <textarea id="dateMessage" placeholder="یه جای خوب سراغ دارم، فقط بگو کی و کجا برات خوبه"></textarea>
+  </fieldset>
+
+  <fieldset>
+    <legend>اتصال به تلگرام (اختیاری)</legend>
+    <label>Bot Token</label>
+    <input type="text" id="telegramBotToken" placeholder="123456:ABC-DEF...">
+
+    <label>Chat ID</label>
+    <input type="text" id="telegramChatId" placeholder="مثلاً 123456789">
+    <p class="hint">
+      از @BotFather یه ربات بساز و توکنش رو بگیر. برای Chat ID، به ربات پیام بده و از @userinfobot یا آدرس
+      <code>api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code> آی‌دی چتت رو پیدا کن.
+    </p>
+  </fieldset>
 
   <button id="saveBtn">ذخیره کن</button>
   <div id="status"></div>
@@ -77,28 +116,50 @@
 </div>
 
 <script>
-async function loadCurrent() {
-  const res = await fetch('/api/config');
-  const cfg = await res.json();
-  document.getElementById('name').value = cfg.name || '';
-  document.getElementById('question').value = cfg.question || '';
-  document.getElementById('message').value = cfg.message || '';
-}
-loadCurrent();
+const passwordInput = document.getElementById('password');
+const statusEl = document.getElementById('status');
+
+const fields = ['name','question','message','dateHeading','dateMessage'];
+
+document.getElementById('loadBtn').addEventListener('click', async () => {
+  const password = passwordInput.value;
+  statusEl.textContent = 'در حال بارگذاری...';
+  try {
+    const res = await fetch('/api/admin/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      statusEl.textContent = '❌ ' + (data.error || 'خطا');
+      statusEl.style.color = '#ff8f8f';
+      return;
+    }
+    fields.forEach(f => { if (document.getElementById(f)) document.getElementById(f).value = data[f] || ''; });
+    document.getElementById('telegramBotToken').value = data.telegram?.botToken || '';
+    document.getElementById('telegramChatId').value = data.telegram?.chatId || '';
+    statusEl.textContent = '✅ بارگذاری شد';
+    statusEl.style.color = '#8affc1';
+  } catch (e) {
+    statusEl.textContent = '❌ خطای شبکه';
+    statusEl.style.color = '#ff8f8f';
+  }
+});
 
 document.getElementById('saveBtn').addEventListener('click', async () => {
-  const password = document.getElementById('password').value;
-  const name = document.getElementById('name').value;
-  const question = document.getElementById('question').value;
-  const message = document.getElementById('message').value;
-  const statusEl = document.getElementById('status');
+  const password = passwordInput.value;
+  const body = { password };
+  fields.forEach(f => { body[f] = document.getElementById(f).value; });
+  body.telegramBotToken = document.getElementById('telegramBotToken').value;
+  body.telegramChatId = document.getElementById('telegramChatId').value;
 
   statusEl.textContent = 'در حال ذخیره...';
   try {
     const res = await fetch('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, name, question, message })
+      body: JSON.stringify(body)
     });
     const data = await res.json();
     if (res.ok) {

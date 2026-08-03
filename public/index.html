@@ -4,30 +4,75 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>یه چیزی برات دارم...</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
+<div class="mesh-bg">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
 <div id="hearts-bg"></div>
 
-<div class="card" id="card">
-  <div class="stage" id="stage-question">
-    <div class="pulse-heart">❤️</div>
-    <h1 id="question-text">میشه مال من بشی؟</h1>
-    <p id="message-text" class="msg"></p>
-    <div class="btn-row">
-      <button id="yesBtn" class="btn yes">بله ❤️</button>
-      <button id="noBtn" class="btn no">نه</button>
-    </div>
-  </div>
+<main class="wrap">
+  <div class="card" id="card">
 
-  <div class="stage hidden" id="stage-answer">
-    <div class="big-heart">💖</div>
-    <h1 id="answer-text">وای جدی؟! خیلی خوشحالم کردی 🥹</h1>
-    <p class="msg">حالا برو بهش بگو حواسش به گوشیش باشه 😏</p>
+    <!-- مرحله ۱: سؤال اصلی -->
+    <section class="stage active" id="stage-question">
+      <div class="icon-wrap">
+        <span class="pulse-heart">💗</span>
+      </div>
+      <h1 id="question-text">میشه مال من بشی؟</h1>
+      <p id="message-text" class="msg"></p>
+      <div class="btn-row" id="btn-row">
+        <button id="yesBtn" class="btn btn-primary">بله ❤️</button>
+        <button id="noBtn" class="btn btn-ghost">نه</button>
+      </div>
+      <div class="nudge" id="nudge"></div>
+    </section>
+
+    <!-- مرحله ۲: تایید + دعوت به دیت -->
+    <section class="stage" id="stage-date">
+      <div class="icon-wrap">
+        <span class="big-heart">💖</span>
+      </div>
+      <h1 id="answer-text">وای جدی؟! خیلی خوشحالم کردی 🥹</h1>
+      <p class="msg" id="date-heading">بریم یه دیت باحال؟</p>
+      <p class="submsg" id="date-message"></p>
+
+      <div class="btn-row">
+        <button id="dateYesBtn" class="btn btn-primary">بریم! 🥂</button>
+        <button id="dateLaterBtn" class="btn btn-ghost-2">بذار بعداً بگم</button>
+      </div>
+
+      <form class="date-form hidden" id="date-form">
+        <label for="date-day">چه روزی خوبه؟</label>
+        <input type="date" id="date-day" required>
+
+        <label for="date-time">چه ساعتی؟</label>
+        <input type="time" id="date-time" required>
+
+        <label for="date-note">یه پیام کوچولو (اختیاری)</label>
+        <textarea id="date-note" placeholder="مثلاً: اون کافه‌ای که دوست داری بریم 😊"></textarea>
+
+        <button type="submit" class="btn btn-primary full" id="sendDateBtn">درخواست رو بفرست 💌</button>
+      </form>
+    </section>
+
+    <!-- مرحله ۳: پیام نهایی -->
+    <section class="stage" id="stage-final">
+      <div class="icon-wrap">
+        <span class="big-heart pop">✨</span>
+      </div>
+      <h1 id="final-title">همه چی ثبت شد!</h1>
+      <p class="msg" id="final-text">به زودی هماهنگ می‌کنیم، منتظر باش 💕</p>
+    </section>
+
   </div>
-</div>
+</main>
 
 <canvas id="confetti"></canvas>
 
