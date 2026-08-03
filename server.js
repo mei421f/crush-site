@@ -38,6 +38,15 @@ function writeConfig(cfg) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(cfg, null, 2));
 }
 
+async function sendTelegram(botToken, chatId, text) {
+  const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text }),
+  });
+  return tgRes.json();
+}
+
 // تنظیمات عمومی -- بدون اطلاعات حساس تلگرام
 app.get('/api/config', (req, res) => {
   const cfg = readConfig();
@@ -73,6 +82,30 @@ app.post('/api/config', (req, res) => {
   res.json({ success: true, config: updated });
 });
 
+// تست اتصال تلگرام از پنل ادمین -- یه پیام آزمایشی می‌فرسته
+app.post('/api/admin/test-telegram', async (req, res) => {
+  const { password, botToken, chatId } = req.body;
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'رمز اشتباهه' });
+
+  const cfg = readConfig();
+  const token = botToken?.trim() || cfg.telegram?.botToken;
+  const chat = chatId?.trim() || cfg.telegram?.chatId;
+
+  if (!token || !chat) {
+    return res.status(400).json({ error: 'Token یا Chat ID خالیه' });
+  }
+
+  try {
+    const tgData = await sendTelegram(token, chat, '✅ اتصال تست شد! پیام‌های دیت از همینجا برات میان.');
+    if (!tgData.ok) {
+      return res.status(400).json({ error: tgData.description || 'ارسال ناموفق بود' });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در اتصال به تلگرام' });
+  }
+});
+
 // ثبت پاسخ "بله" به سؤال اصلی
 app.post('/api/yes', (req, res) => {
   console.log(`🎉 ${new Date().toISOString()} - جواب بله دریافت شد!`);
@@ -104,12 +137,7 @@ app.post('/api/date-response', async (req, res) => {
   ].filter(Boolean).join('\n');
 
   try {
-    const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text }),
-    });
-    const tgData = await tgRes.json();
+    const tgData = await sendTelegram(botToken, chatId, text);
     if (!tgData.ok) {
       console.error('خطای تلگرام:', tgData);
       return res.json({ success: true, telegramSent: false, warning: 'ارسال به تلگرام ناموفق بود' });

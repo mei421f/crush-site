@@ -1,294 +1,341 @@
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 :root {
-  --rose: #ff5c8a;
-  --rose-light: #ff9ec4;
-  --gold: #ffcf7a;
-  --glass: rgba(255,255,255,0.10);
-  --glass-border: rgba(255,255,255,0.22);
+  --bg: #fbfbfd;
+  --surface: #ffffff;
+  --surface-2: #f5f5f7;
+  --ink: #1d1d1f;
+  --ink-soft: #6e6e73;
+  --ink-faint: #a1a1a6;
+  --rose: #ff375f;
+  --rose-deep: #e0264b;
+  --rose-soft: #ffe5ec;
+  --border: rgba(0,0,0,0.07);
+  --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 24px 60px -20px rgba(0,0,0,0.16);
+  --radius: 28px;
+  color-scheme: light;
 }
 
-html {
-  height: 100%;
+html[data-theme="dark"] {
+  --bg: #000000;
+  --surface: #1c1c1e;
+  --surface-2: #2c2c2e;
+  --ink: #f5f5f7;
+  --ink-soft: #98989d;
+  --ink-faint: #6e6e73;
+  --rose: #ff375f;
+  --rose-deep: #ff6482;
+  --rose-soft: rgba(255,55,95,0.16);
+  --border: rgba(255,255,255,0.09);
+  --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 30px 70px -20px rgba(0,0,0,0.6);
+  color-scheme: dark;
 }
+
+html, body { height: 100%; }
 
 body {
   font-family: 'Vazirmatn', sans-serif;
   min-height: 100vh;
-  min-height: 100svh; /* ارتفاع واقعی صفحه در موبایل، بدون پرش نوار آدرس */
+  min-height: 100svh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at top, #3a1030 0%, #1a0a22 55%, #0e0714 100%);
+  background: var(--bg);
+  color: var(--ink);
   overflow-x: hidden;
   position: relative;
   padding: clamp(14px, 4vw, 24px);
   padding-top: max(clamp(14px, 4vw, 24px), env(safe-area-inset-top));
   padding-bottom: max(clamp(14px, 4vw, 24px), env(safe-area-inset-bottom));
+  transition: background 0.4s ease, color 0.4s ease;
 }
 
-/* ---------- پس‌زمینه‌ی مش متحرک ---------- */
-.mesh-bg {
+/* ---------- پس‌زمینه‌ی ملایم و ساکت ---------- */
+.ambient {
   position: fixed;
   inset: 0;
   z-index: 0;
-  overflow: hidden;
-  filter: blur(70px);
-  opacity: 0.6;
+  pointer-events: none;
+  background:
+    radial-gradient(600px 600px at 82% -6%, var(--rose-soft), transparent 60%),
+    radial-gradient(500px 500px at 8% 108%, var(--rose-soft), transparent 55%);
+  opacity: 0.9;
+  animation: ambientBreathe 12s ease-in-out infinite alternate;
 }
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  mix-blend-mode: screen;
+@keyframes ambientBreathe {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
 }
-.blob-1 {
-  width: clamp(240px, 55vmin, 620px); height: clamp(240px, 55vmin, 620px);
-  background: radial-gradient(circle, var(--rose), transparent 65%);
-  top: -12%; left: -10%;
-  animation: drift1 16s ease-in-out infinite alternate;
-}
-.blob-2 {
-  width: clamp(200px, 45vmin, 520px); height: clamp(200px, 45vmin, 520px);
-  background: radial-gradient(circle, #8a4fff, transparent 65%);
-  bottom: -15%; right: -10%;
-  animation: drift2 20s ease-in-out infinite alternate;
-}
-.blob-3 {
-  width: clamp(160px, 35vmin, 420px); height: clamp(160px, 35vmin, 420px);
-  background: radial-gradient(circle, var(--gold), transparent 65%);
-  top: 30%; right: 15%;
-  animation: drift3 14s ease-in-out infinite alternate;
-}
-@keyframes drift1 { to { transform: translate(8%, 10%) scale(1.15); } }
-@keyframes drift2 { to { transform: translate(-10%, -8%) scale(1.1); } }
-@keyframes drift3 { to { transform: translate(-15%, 12%) scale(0.9); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .blob, .floating-heart, .pulse-heart, .btn-primary { animation: none !important; }
+  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
 }
 
-/* ---------- قلب‌های شناور ---------- */
-#hearts-bg {
+/* ---------- کنترل‌های بالا (صدا / تم) ---------- */
+.controls {
   position: fixed;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 1;
+  top: max(16px, env(safe-area-inset-top));
+  inset-inline-start: 16px;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
 }
-.floating-heart {
-  position: absolute;
-  bottom: -50px;
-  opacity: 0.55;
-  filter: blur(0.3px) drop-shadow(0 0 6px rgba(255,120,160,0.4));
-  animation: floatUp linear infinite;
-  user-select: none;
+.ctrl-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-soft);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s cubic-bezier(.2,1.5,.4,1), color 0.2s;
 }
-@keyframes floatUp {
-  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
-  10% { opacity: 0.6; }
-  100% { transform: translateY(-115vh) rotate(360deg); opacity: 0; }
-}
+.ctrl-btn:hover { color: var(--ink); transform: translateY(-1px) scale(1.05); }
+.ctrl-btn:active { transform: scale(0.94); }
+.ctrl-btn .icon { width: 18px; height: 18px; }
 
 /* ---------- کارت اصلی ---------- */
 .wrap {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 460px;
+  max-width: 420px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
 }
 
 .card {
   position: relative;
-  background: var(--glass);
-  backdrop-filter: blur(28px) saturate(160%);
-  -webkit-backdrop-filter: blur(28px) saturate(160%);
-  border: 1px solid var(--glass-border);
-  border-radius: clamp(20px, 5vw, 32px);
-  padding: clamp(28px, 7vw, 54px) clamp(18px, 6vw, 42px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: clamp(30px, 7vw, 46px) clamp(22px, 6vw, 38px);
   width: 100%;
   text-align: center;
-  overflow: hidden; /* هیچ عنصری (مثل دکمه‌ی فرارکننده) نباید از کارت بیرون بزنه */
-  box-shadow:
-    0 30px 80px rgba(0,0,0,0.45),
-    inset 0 1px 0 rgba(255,255,255,0.15);
-  animation: cardIn 0.9s cubic-bezier(.17,.89,.32,1.28);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  animation: cardIn 0.7s cubic-bezier(.16,.9,.28,1.05);
+  transition: background 0.4s ease, border-color 0.4s ease;
 }
 
 @keyframes cardIn {
-  from { transform: scale(0.85) translateY(30px); opacity: 0; }
-  to { transform: scale(1) translateY(0); opacity: 1; }
+  from { transform: translateY(18px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
+
+/* ---------- نشانگر مراحل ---------- */
+.progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: clamp(20px, 5vw, 30px);
+}
+.progress .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  transition: background 0.35s, transform 0.35s, border-color .35s;
+}
+.progress .dot.active { background: var(--rose); border-color: var(--rose); transform: scale(1.35); }
+.progress .dot.done { background: var(--ink-faint); border-color: transparent; }
+.progress .line { width: 22px; height: 1px; background: var(--border); }
 
 /* ---------- مراحل ---------- */
 .stage { display: none; }
 .stage.active {
   display: block;
-  animation: stageIn 0.6s cubic-bezier(.2,.8,.3,1);
+  animation: stageIn 0.5s cubic-bezier(.2,.8,.3,1);
 }
 @keyframes stageIn {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.icon-wrap { margin-bottom: 6px; }
-
-.pulse-heart, .big-heart {
-  display: inline-block;
-  font-size: clamp(44px, 13vw, 64px);
-  animation: pulse 1.6s ease-in-out infinite;
-  filter: drop-shadow(0 6px 20px rgba(255, 92, 138, 0.5));
+.eyebrow {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-faint);
+  letter-spacing: 0.02em;
+  margin-bottom: 18px;
 }
-.big-heart.pop { animation: pop 0.7s cubic-bezier(.2,1.4,.4,1); }
 
-@keyframes pulse {
+/* ---------- ارب و آیکون امضادار ---------- */
+.orb-wrap {
+  position: relative;
+  width: 84px; height: 84px;
+  margin: 0 auto 20px;
+  display: flex; align-items: center; justify-content: center;
+}
+.orb {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  filter: blur(16px);
+  animation: orbBreathe 3.4s ease-in-out infinite;
+}
+.orb-rose { background: radial-gradient(circle, var(--rose) 0%, transparent 72%); opacity: 0.55; }
+@keyframes orbBreathe {
+  0%, 100% { transform: scale(0.92); opacity: 0.4; }
+  50% { transform: scale(1.12); opacity: 0.65; }
+}
+.stage-icon {
+  position: relative;
+  width: 34px; height: 34px;
+  color: var(--rose);
+  filter: drop-shadow(0 6px 14px rgba(255,55,95,0.35));
+}
+.heart-icon { animation: iconPulse 1.8s ease-in-out infinite; }
+@keyframes iconPulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.14); }
+  50% { transform: scale(1.1); }
 }
-@keyframes pop {
-  0% { transform: scale(0) rotate(-10deg); }
-  60% { transform: scale(1.25) rotate(4deg); }
-  100% { transform: scale(1) rotate(0deg); }
+.check-icon, .spark-icon { animation: iconPop 0.6s cubic-bezier(.2,1.5,.4,1); }
+@keyframes iconPop {
+  0% { transform: scale(0.3) rotate(-8deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
 }
 
 .card h1 {
-  color: #fff;
-  font-size: clamp(1.25rem, 5.5vw, 1.9rem);
+  color: var(--ink);
+  font-size: clamp(1.35rem, 5.5vw, 1.7rem);
   font-weight: 700;
   line-height: 1.5;
-  margin: 16px 0 10px;
+  margin: 0 0 10px;
   overflow-wrap: break-word;
-  background: linear-gradient(90deg, #fff, #ffd7e6 60%, var(--gold));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 2px 30px rgba(255,150,180,0.25);
+  letter-spacing: -0.01em;
 }
 
 .msg {
-  color: rgba(255,255,255,0.92);
-  font-size: clamp(0.92rem, 3.8vw, 1.05rem);
-  font-weight: 500;
+  color: var(--ink-soft);
+  font-size: clamp(0.94rem, 3.6vw, 1.02rem);
+  font-weight: 400;
   margin-bottom: 6px;
-  line-height: 1.85;
+  line-height: 1.8;
 }
 .submsg {
-  color: rgba(255,255,255,0.65);
-  font-size: clamp(0.82rem, 3.2vw, 0.92rem);
-  margin-bottom: clamp(18px, 5vw, 28px);
+  color: var(--ink-faint);
+  font-size: clamp(0.82rem, 3.2vw, 0.88rem);
+  margin-bottom: clamp(18px, 5vw, 26px);
   line-height: 1.8;
 }
 
 /* ---------- دکمه‌ها ---------- */
 .btn-row {
   display: flex;
-  gap: clamp(10px, 3vw, 16px);
+  gap: 10px;
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
   position: relative;
-  min-height: 56px;
-  margin-top: clamp(16px, 4vw, 22px);
+  min-height: 52px;
+  margin-top: clamp(18px, 4vw, 24px);
 }
 
 .btn {
-  padding: clamp(12px, 3vw, 15px) clamp(20px, 6vw, 34px);
+  padding: 13px clamp(22px, 6vw, 30px);
   border: none;
   border-radius: 50px;
   font-family: inherit;
-  font-size: clamp(0.9rem, 3.4vw, 1.02rem);
+  font-size: 0.96rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: transform 0.22s cubic-bezier(.2,1.6,.4,1), box-shadow 0.25s;
+  transition: transform 0.2s cubic-bezier(.2,1.6,.4,1), box-shadow 0.25s, background 0.2s;
   will-change: transform;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--rose) 0%, #ff8fab 50%, var(--gold) 150%);
-  background-size: 200% 200%;
+  background: var(--rose);
   color: #fff;
-  box-shadow: 0 14px 34px rgba(255, 92, 138, 0.45);
-  animation: shimmer 4s ease infinite;
+  box-shadow: 0 10px 24px -6px rgba(255, 55, 95, 0.5);
 }
-@keyframes shimmer {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-.btn-primary:hover {
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 20px 45px rgba(255, 92, 138, 0.6);
-}
+.btn-primary:hover { background: var(--rose-deep); transform: translateY(-2px); box-shadow: 0 14px 30px -6px rgba(255, 55, 95, 0.55); }
+.btn-primary:active { transform: translateY(0) scale(0.97); }
 .btn-primary.full { width: 100%; }
 
 .btn-ghost {
-  background: rgba(255,255,255,0.10);
-  border: 1px solid rgba(255,255,255,0.25);
-  color: rgba(255,255,255,0.85);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--ink-soft);
   position: relative;
 }
+.btn-ghost:hover { color: var(--ink); }
+
 .btn-ghost-2 {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.2);
-  color: rgba(255,255,255,0.6);
-  font-size: clamp(0.82rem, 3vw, 0.9rem);
-  padding: clamp(10px, 3vw, 12px) clamp(16px, 5vw, 24px);
+  border: 1px solid var(--border);
+  color: var(--ink-faint);
+  font-size: 0.86rem;
+  padding: 11px 20px;
 }
-.btn-ghost-2:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
+.btn-ghost-2:hover { color: var(--ink); border-color: var(--ink-faint); }
 
 .nudge {
-  margin-top: 16px;
-  font-size: clamp(0.78rem, 3vw, 0.85rem);
-  color: rgba(255,255,255,0.55);
+  margin-top: 14px;
+  font-size: 0.82rem;
+  color: var(--ink-faint);
   min-height: 18px;
   transition: opacity 0.3s;
 }
 
 /* ---------- فرم دیت ---------- */
 .date-form {
-  margin-top: clamp(18px, 5vw, 26px);
+  margin-top: clamp(18px, 5vw, 24px);
   text-align: right;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  animation: stageIn 0.5s ease;
+  gap: 14px;
+  animation: stageIn 0.4s ease;
 }
 .date-form.hidden { display: none; }
 
-.date-form label {
-  color: rgba(255,255,255,0.8);
-  font-size: clamp(0.82rem, 3vw, 0.88rem);
-  margin-bottom: -4px;
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-weight: 500;
 }
+.field .optional { color: var(--ink-faint); font-weight: 400; }
 
 .date-form input,
 .date-form textarea {
   width: 100%;
   max-width: 100%;
-  padding: clamp(11px, 3vw, 13px) clamp(12px, 3vw, 16px);
+  padding: 12px 14px;
   border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.08);
-  color: #fff;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--ink);
   font-family: inherit;
-  font-size: clamp(0.88rem, 3.2vw, 0.95rem);
+  font-size: 0.92rem;
   outline: none;
   transition: border-color 0.2s, background 0.2s;
-  color-scheme: dark;
+  color-scheme: inherit;
 }
 .date-form input:focus,
 .date-form textarea:focus {
-  border-color: var(--rose-light);
-  background: rgba(255,255,255,0.13);
+  border-color: var(--rose);
+  background: var(--surface);
 }
 .date-form textarea {
   resize: vertical;
-  min-height: 60px;
+  min-height: 58px;
 }
 
 .hidden { display: none !important; }
+
+.footnote {
+  position: relative;
+  z-index: 2;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  text-align: center;
+}
 
 #confetti {
   position: fixed;
@@ -297,9 +344,8 @@ body {
   z-index: 3;
 }
 
-/* صفحه‌های خیلی کوچیک یا لندسکیپ کوتاه */
 @media (max-height: 560px) {
   body { align-items: flex-start; }
-  .card { margin-top: 12px; }
-  .pulse-heart, .big-heart { font-size: clamp(36px, 10vh, 56px); }
+  .wrap { margin-top: 12px; }
+  .orb-wrap { width: 64px; height: 64px; margin-bottom: 12px; }
 }

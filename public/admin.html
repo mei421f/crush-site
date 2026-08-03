@@ -2,131 +2,253 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>پنل مدیریت</title>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin:0; padding:0; font-family:'Vazirmatn',sans-serif; }
+  :root {
+    --bg: #fbfbfd;
+    --surface: #ffffff;
+    --surface-2: #f5f5f7;
+    --ink: #1d1d1f;
+    --ink-soft: #6e6e73;
+    --ink-faint: #a1a1a6;
+    --rose: #ff375f;
+    --rose-deep: #e0264b;
+    --border: rgba(0,0,0,0.08);
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 20px 50px -18px rgba(0,0,0,0.18);
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', sans-serif; }
   body {
     min-height: 100vh;
-    display: flex; align-items: center; justify-content: center;
-    background: radial-gradient(ellipse at top, #2b1055 0%, #12081f 70%);
-    padding: 30px 16px;
+    background: var(--bg);
+    color: var(--ink);
+    padding: clamp(16px, 4vw, 40px);
   }
+  .top {
+    max-width: 1040px; margin: 0 auto 22px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  .top h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.01em; }
+  .top .sub { color: var(--ink-soft); font-size: 0.85rem; margin-top: 2px; }
+  .layout {
+    max-width: 1040px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr; gap: 20px;
+  }
+  @media (min-width: 860px) {
+    .layout { grid-template-columns: 1fr 360px; align-items: start; }
+  }
+
   .panel {
-    background: rgba(255,255,255,0.07);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.14);
-    border-radius: clamp(18px, 4vw, 26px);
-    padding: clamp(22px, 6vw, 40px);
-    max-width: 460px;
-    width: 100%;
-    color: #fff;
-    box-shadow: 0 30px 70px rgba(0,0,0,0.4);
-    overflow-wrap: break-word;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: clamp(18px, 4vw, 28px);
+    box-shadow: var(--shadow);
   }
-  h1 { text-align:center; margin-bottom: 6px; font-size: 1.4rem; }
-  .sub { text-align:center; color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-bottom: 24px;}
-  fieldset { border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 16px; margin-top: 22px; }
-  legend { padding: 0 8px; font-size: 0.85rem; color: #ffb3c6; }
-  label { display:block; margin: 14px 0 6px; font-size: 0.87rem; opacity:0.85; }
+
+  .auth-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
+  .auth-row input { flex: 1; min-width: 160px; }
+  .auth-row button { width: auto; margin-top: 0; padding: 12px 18px; white-space: nowrap; }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+  .tab-btn {
+    background: none; border: none; padding: 10px 4px; margin-left: 18px;
+    font-family: inherit; font-size: 0.9rem; font-weight: 600; color: var(--ink-faint);
+    cursor: pointer; position: relative; top: 1px;
+  }
+  .tab-btn.active { color: var(--ink); border-bottom: 2px solid var(--rose); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px);} to { opacity:1; transform: translateY(0);} }
+
+  label { display:block; margin: 14px 0 6px; font-size: 0.85rem; font-weight: 500; color: var(--ink-soft); }
   label:first-child { margin-top: 0; }
+  .char-count { float: left; color: var(--ink-faint); font-weight: 400; font-size: 0.78rem; }
   input, textarea {
     width: 100%;
     padding: 12px 14px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.08);
-    color: #fff;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--ink);
     font-family: inherit;
-    font-size: 0.93rem;
+    font-size: 0.92rem;
     outline: none;
-    color-scheme: dark;
+    transition: border-color 0.2s, background 0.2s;
   }
-  textarea { resize: vertical; min-height: 60px; }
-  input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.4); }
-  input:focus, textarea:focus { border-color: #ff9ec4; }
+  textarea { resize: vertical; min-height: 64px; }
+  input::placeholder, textarea::placeholder { color: var(--ink-faint); }
+  input:focus, textarea:focus { border-color: var(--rose); background: var(--surface); }
+
   button {
-    margin-top: 24px;
+    margin-top: 22px;
     width: 100%;
     padding: 14px;
     border: none;
     border-radius: 14px;
-    background: linear-gradient(135deg, #ff5c8a, #ff9ec4);
+    background: var(--rose);
     color: #fff;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.96rem;
+    font-family: inherit;
     cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
   }
-  #status { text-align:center; margin-top: 14px; font-size: 0.88rem; min-height: 20px; }
-  a.preview-link { display:block; text-align:center; margin-top: 18px; color: #ffb3c6; font-size: 0.85rem; text-decoration:none; }
-  .hint { font-size: 0.76rem; color: rgba(255,255,255,0.45); margin-top: 6px; line-height: 1.6; word-break: break-word; }
-  .hint code { word-break: break-all; }
-  body { overflow-x: hidden; }
-  .load-btn {
-    background: rgba(255,255,255,0.1);
-    margin-top: 0;
+  button:hover { background: var(--rose-deep); }
+  button:active { transform: scale(0.98); }
+  button.secondary {
+    background: var(--surface-2);
+    color: var(--ink);
+    border: 1px solid var(--border);
   }
+  button.secondary:hover { background: var(--surface); }
+  button:disabled { opacity: 0.55; cursor: default; }
+
+  #status { text-align:center; margin-top: 14px; font-size: 0.85rem; min-height: 20px; color: var(--ink-soft); }
+  .hint { font-size: 0.76rem; color: var(--ink-faint); margin-top: 8px; line-height: 1.7; }
+  .hint code { background: var(--surface-2); padding: 1px 5px; border-radius: 6px; word-break: break-all; }
+
+  .link-row { display:flex; gap: 8px; margin-top: 10px; }
+  .link-row input { flex: 1; font-size: 0.82rem; color: var(--ink-soft); }
+  .link-row button { width: auto; margin-top: 0; padding: 10px 14px; font-size: 0.82rem; }
+
+  /* پیش‌نمایش موبایل */
+  .preview-panel { position: sticky; top: 20px; }
+  .phone-frame {
+    background: #000;
+    border-radius: 34px;
+    padding: 10px;
+    box-shadow: var(--shadow);
+  }
+  .phone-frame iframe {
+    width: 100%;
+    height: 560px;
+    border: none;
+    border-radius: 26px;
+    background: #fff;
+  }
+  .preview-caption { text-align:center; color: var(--ink-faint); font-size: 0.78rem; margin-top: 10px; }
 </style>
 </head>
 <body>
 
-<div class="panel">
-  <h1>💌 پنل مدیریت</h1>
-  <p class="sub">اینجا محتوای صفحه و تنظیمات تلگرام رو مدیریت کن</p>
+<div class="top">
+  <div>
+    <h1>پنل مدیریت 💌</h1>
+    <p class="sub">محتوای صفحه و اتصال تلگرام رو از اینجا مدیریت کن</p>
+  </div>
+  <a href="/" target="_blank" style="color: var(--rose); font-size: 0.85rem; text-decoration:none; font-weight:600;">پیش‌نمایش کامل ↗</a>
+</div>
 
-  <label>رمز ادمین</label>
-  <input type="password" id="password" placeholder="رمز عبور">
-  <button class="load-btn" id="loadBtn" type="button">بارگذاری تنظیمات فعلی 🔄</button>
+<div class="layout">
+  <div class="panel">
+    <div class="auth-row">
+      <input type="password" id="password" placeholder="رمز ادمین" autocomplete="current-password">
+      <button type="button" class="secondary" id="loadBtn" style="margin-top:0;">بارگذاری</button>
+    </div>
 
-  <fieldset>
-    <legend>پیام اصلی</legend>
-    <label>اسم طرف</label>
-    <input type="text" id="name" placeholder="مثلاً سارا">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="message">پیام اصلی</button>
+      <button class="tab-btn" data-tab="date">دعوت به دیت</button>
+      <button class="tab-btn" data-tab="telegram">تلگرام</button>
+    </div>
 
-    <label>سؤال</label>
-    <input type="text" id="question" placeholder="میشه مال من بشی؟">
+    <div class="tab-panel active" id="tab-message">
+      <label>اسم طرف</label>
+      <input type="text" id="name" placeholder="مثلاً سارا">
 
-    <label>پیام دلی</label>
-    <textarea id="message" placeholder="یه چیزی هست که مدت‌هاست می‌خوام بهت بگم..."></textarea>
-  </fieldset>
+      <label>سؤال</label>
+      <input type="text" id="question" placeholder="میشه مال من بشی؟">
 
-  <fieldset>
-    <legend>دعوت به دیت</legend>
-    <label>عنوان دعوت</label>
-    <input type="text" id="dateHeading" placeholder="بریم یه دیت باحال؟">
+      <label>پیام دلی</label>
+      <textarea id="message" placeholder="یه چیزی هست که مدت‌هاست می‌خوام بهت بگم..."></textarea>
+    </div>
 
-    <label>توضیح کوتاه</label>
-    <textarea id="dateMessage" placeholder="یه جای خوب سراغ دارم، فقط بگو کی و کجا برات خوبه"></textarea>
-  </fieldset>
+    <div class="tab-panel" id="tab-date">
+      <label>عنوان دعوت</label>
+      <input type="text" id="dateHeading" placeholder="بریم یه دیت باحال؟">
 
-  <fieldset>
-    <legend>اتصال به تلگرام (اختیاری)</legend>
-    <label>Bot Token</label>
-    <input type="text" id="telegramBotToken" placeholder="123456:ABC-DEF...">
+      <label>توضیح کوتاه</label>
+      <textarea id="dateMessage" placeholder="یه جای خوب سراغ دارم، فقط بگو کی و کجا برات خوبه"></textarea>
+    </div>
 
-    <label>Chat ID</label>
-    <input type="text" id="telegramChatId" placeholder="مثلاً 123456789">
-    <p class="hint">
-      از @BotFather یه ربات بساز و توکنش رو بگیر. برای Chat ID، به ربات پیام بده و از @userinfobot یا آدرس
-      <code>api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code> آی‌دی چتت رو پیدا کن.
-    </p>
-  </fieldset>
+    <div class="tab-panel" id="tab-telegram">
+      <label>Bot Token</label>
+      <input type="text" id="telegramBotToken" placeholder="123456:ABC-DEF...">
 
-  <button id="saveBtn">ذخیره کن</button>
-  <div id="status"></div>
-  <a class="preview-link" href="/">👀 پیش‌نمایش صفحه اصلی</a>
+      <label>Chat ID</label>
+      <input type="text" id="telegramChatId" placeholder="مثلاً 123456789">
+      <p class="hint">
+        از @BotFather یه ربات بساز و توکنش رو بگیر. برای Chat ID به ربات پیام بده و از @userinfobot آی‌دی چتت رو پیدا کن.
+      </p>
+      <button type="button" class="secondary" id="testTgBtn" style="margin-top:14px;">ارسال پیام آزمایشی</button>
+    </div>
+
+    <button id="saveBtn">ذخیره کن</button>
+    <div id="status"></div>
+
+    <div class="link-row">
+      <input type="text" id="publicLink" readonly>
+      <button type="button" class="secondary" id="copyLinkBtn">کپی لینک</button>
+    </div>
+  </div>
+
+  <div class="preview-panel">
+    <div class="phone-frame">
+      <iframe id="previewFrame" src="/?preview=1"></iframe>
+    </div>
+    <p class="preview-caption">پیش‌نمایش زنده، همزمان با تایپت آپدیت می‌شه</p>
+  </div>
 </div>
 
 <script>
 const passwordInput = document.getElementById('password');
 const statusEl = document.getElementById('status');
-
+const previewFrame = document.getElementById('previewFrame');
 const fields = ['name','question','message','dateHeading','dateMessage'];
 
+document.getElementById('publicLink').value = location.origin + '/';
+
+// --- تب‌ها ---
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// --- رمز رو تو سشن نگه دار ---
+const savedPassword = sessionStorage.getItem('crush-admin-pass');
+if (savedPassword) passwordInput.value = savedPassword;
+passwordInput.addEventListener('change', () => sessionStorage.setItem('crush-admin-pass', passwordInput.value));
+
+// --- کپی لینک ---
+document.getElementById('copyLinkBtn').addEventListener('click', async () => {
+  await navigator.clipboard.writeText(document.getElementById('publicLink').value);
+  const btn = document.getElementById('copyLinkBtn');
+  const old = btn.textContent;
+  btn.textContent = 'کپی شد ✓';
+  setTimeout(() => btn.textContent = old, 1500);
+});
+
+// --- پیش‌نمایش زنده با postMessage ---
+function sendPreview() {
+  const payload = {};
+  fields.forEach(f => payload[f] = document.getElementById(f).value);
+  previewFrame.contentWindow?.postMessage({ type: 'crush-preview', payload }, location.origin);
+}
+fields.forEach(f => document.getElementById(f).addEventListener('input', sendPreview));
+previewFrame.addEventListener('load', sendPreview);
+
+// --- بارگذاری تنظیمات فعلی ---
 document.getElementById('loadBtn').addEventListener('click', async () => {
   const password = passwordInput.value;
   statusEl.textContent = 'در حال بارگذاری...';
+  statusEl.style.color = 'var(--ink-soft)';
   try {
     const res = await fetch('/api/admin/config', {
       method: 'POST',
@@ -136,20 +258,23 @@ document.getElementById('loadBtn').addEventListener('click', async () => {
     const data = await res.json();
     if (!res.ok) {
       statusEl.textContent = '❌ ' + (data.error || 'خطا');
-      statusEl.style.color = '#ff8f8f';
+      statusEl.style.color = '#ff453a';
       return;
     }
     fields.forEach(f => { if (document.getElementById(f)) document.getElementById(f).value = data[f] || ''; });
     document.getElementById('telegramBotToken').value = data.telegram?.botToken || '';
     document.getElementById('telegramChatId').value = data.telegram?.chatId || '';
+    sessionStorage.setItem('crush-admin-pass', password);
     statusEl.textContent = '✅ بارگذاری شد';
-    statusEl.style.color = '#8affc1';
+    statusEl.style.color = '#2fb350';
+    sendPreview();
   } catch (e) {
     statusEl.textContent = '❌ خطای شبکه';
-    statusEl.style.color = '#ff8f8f';
+    statusEl.style.color = '#ff453a';
   }
 });
 
+// --- ذخیره ---
 document.getElementById('saveBtn').addEventListener('click', async () => {
   const password = passwordInput.value;
   const body = { password };
@@ -158,6 +283,7 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   body.telegramChatId = document.getElementById('telegramChatId').value;
 
   statusEl.textContent = 'در حال ذخیره...';
+  statusEl.style.color = 'var(--ink-soft)';
   try {
     const res = await fetch('/api/config', {
       method: 'POST',
@@ -167,16 +293,47 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
     const data = await res.json();
     if (res.ok) {
       statusEl.textContent = '✅ ذخیره شد!';
-      statusEl.style.color = '#8affc1';
+      statusEl.style.color = '#2fb350';
+      sessionStorage.setItem('crush-admin-pass', password);
+      previewFrame.src = previewFrame.src; // ری‌لود کامل تا نسخه ذخیره‌شده رو نشون بده
     } else {
       statusEl.textContent = '❌ ' + (data.error || 'خطا');
-      statusEl.style.color = '#ff8f8f';
+      statusEl.style.color = '#ff453a';
     }
   } catch (e) {
     statusEl.textContent = '❌ خطای شبکه';
-    statusEl.style.color = '#ff8f8f';
+    statusEl.style.color = '#ff453a';
   }
 });
+
+// --- تست تلگرام ---
+document.getElementById('testTgBtn').addEventListener('click', async () => {
+  const password = passwordInput.value;
+  const botToken = document.getElementById('telegramBotToken').value;
+  const chatId = document.getElementById('telegramChatId').value;
+  const btn = document.getElementById('testTgBtn');
+  const old = btn.textContent;
+  btn.textContent = 'در حال ارسال...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin/test-telegram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, botToken, chatId })
+    });
+    const data = await res.json();
+    statusEl.textContent = res.ok ? '✅ پیام تست ارسال شد، تلگرامت رو چک کن' : '❌ ' + (data.error || 'خطا');
+    statusEl.style.color = res.ok ? '#2fb350' : '#ff453a';
+  } catch (e) {
+    statusEl.textContent = '❌ خطای شبکه';
+    statusEl.style.color = '#ff453a';
+  }
+  btn.textContent = old;
+  btn.disabled = false;
+});
+
+// بارگذاری خودکار اگه رمز از قبل تو سشن بود
+if (savedPassword) document.getElementById('loadBtn').click();
 </script>
 </body>
 </html>
