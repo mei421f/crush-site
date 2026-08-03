@@ -13,6 +13,7 @@
 <body>
 
 <div class="ambient" aria-hidden="true"></div>
+<div id="hearts-bg" aria-hidden="true"></div>
 
 <div class="controls">
   <button class="ctrl-btn" id="soundBtn" type="button" aria-label="صدا" title="صدا">
@@ -75,11 +76,17 @@
       <form class="date-form hidden" id="date-form">
         <div class="field">
           <label for="date-day">چه روزی خوبه؟</label>
-          <input type="date" id="date-day" required>
+          <div class="input-icon-wrap">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15.5" rx="3" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 9.5h17M8 3v3.4M16 3v3.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <input type="date" id="date-day" required>
+          </div>
         </div>
         <div class="field">
           <label for="date-time">چه ساعتی؟</label>
-          <input type="time" id="date-time" required>
+          <div class="input-icon-wrap">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.7" stroke="currentColor" stroke-width="1.6"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <input type="time" id="date-time" required>
+          </div>
         </div>
         <div class="field">
           <label for="date-note">یه پیام کوچولو <span class="optional">(اختیاری)</span></label>

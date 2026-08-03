@@ -8,6 +8,30 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const DATA_FILE = path.join(__dirname, 'data', 'config.json');
 
 app.use(express.json());
+
+function isAccessBlocked(access) {
+  if (!access) return false;
+  if (access.expiresAt && new Date() > new Date(access.expiresAt)) return 'expired';
+  if (access.maxVisits && access.visitCount >= access.maxVisits) return 'limit';
+  return false;
+}
+
+// صفحه‌ی اصلی: قبل از سرو کردن، انقضا/محدودیت بازدید رو چک می‌کنه
+app.get('/', (req, res) => {
+  // پیش‌نمایش پنل ادمین نه شمرده میشه نه مسدود -- همیشه قابل مشاهده‌ست
+  if (req.query.preview === '1') {
+    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
+  const cfg = readConfig();
+  const blocked = isAccessBlocked(cfg.access);
+  if (blocked) {
+    return res.status(410).sendFile(path.join(__dirname, 'public', 'expired.html'));
+  }
+  cfg.access.visitCount = (cfg.access.visitCount || 0) + 1;
+  writeConfig(cfg);
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 function ensureDataFile() {
@@ -23,6 +47,11 @@ function ensureDataFile() {
       telegram: {
         botToken: process.env.TELEGRAM_BOT_TOKEN || '',
         chatId: process.env.TELEGRAM_CHAT_ID || ''
+      },
+      access: {
+        expiresAt: null,
+        maxVisits: null,
+        visitCount: 0
       }
     }, null, 2));
   }
@@ -31,7 +60,9 @@ ensureDataFile();
 
 function readConfig() {
   ensureDataFile();
-  return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+  const cfg = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+  if (!cfg.access) cfg.access = { expiresAt: null, maxVisits: null, visitCount: 0 };
+  return cfg;
 }
 
 function writeConfig(cfg) {
@@ -63,7 +94,10 @@ app.post('/api/admin/config', (req, res) => {
 
 // آپدیت تنظیمات
 app.post('/api/config', (req, res) => {
-  const { password, name, message, question, dateHeading, dateMessage, telegramBotToken, telegramChatId } = req.body;
+  const {
+    password, name, message, question, dateHeading, dateMessage,
+    telegramBotToken, telegramChatId, accessExpiresAt, accessMaxVisits
+  } = req.body;
   if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'رمز اشتباهه' });
 
   const current = readConfig();
@@ -76,10 +110,25 @@ app.post('/api/config', (req, res) => {
     telegram: {
       botToken: telegramBotToken !== undefined ? telegramBotToken.trim() : current.telegram?.botToken || '',
       chatId: telegramChatId !== undefined ? telegramChatId.trim() : current.telegram?.chatId || ''
+    },
+    access: {
+      expiresAt: accessExpiresAt !== undefined ? (accessExpiresAt || null) : current.access?.expiresAt || null,
+      maxVisits: accessMaxVisits !== undefined ? (accessMaxVisits ? Number(accessMaxVisits) : null) : current.access?.maxVisits || null,
+      visitCount: current.access?.visitCount || 0
     }
   };
   writeConfig(updated);
   res.json({ success: true, config: updated });
+});
+
+// ریست کردن شمارنده بازدید
+app.post('/api/admin/reset-visits', (req, res) => {
+  const { password } = req.body;
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'رمز اشتباهه' });
+  const cfg = readConfig();
+  cfg.access.visitCount = 0;
+  writeConfig(cfg);
+  res.json({ success: true });
 });
 
 // تست اتصال تلگرام از پنل ادمین -- یه پیام آزمایشی می‌فرسته

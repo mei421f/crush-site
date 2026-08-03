@@ -67,8 +67,33 @@ body {
   to { opacity: 1; }
 }
 
+/* ---------- قلب‌های شناور ملایم ---------- */
+#hearts-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.floating-heart {
+  position: absolute;
+  bottom: -40px;
+  color: var(--rose);
+  opacity: 0;
+  filter: drop-shadow(0 0 8px rgba(255,55,95,0.25));
+  animation: heartFloat linear forwards;
+  user-select: none;
+}
+@keyframes heartFloat {
+  0% { transform: translateY(0) scale(0.9) rotate(0deg); opacity: 0; }
+  8% { opacity: var(--heart-opacity, 0.35); }
+  92% { opacity: var(--heart-opacity, 0.35); }
+  100% { transform: translateY(-112vh) scale(1) rotate(20deg); opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  #hearts-bg { display: none; }
 }
 
 /* ---------- کنترل‌های بالا (صدا / تم) ---------- */
@@ -316,6 +341,7 @@ body {
   outline: none;
   transition: border-color 0.2s, background 0.2s;
   color-scheme: inherit;
+  min-height: 46px;
 }
 .date-form input:focus,
 .date-form textarea:focus {
@@ -325,6 +351,36 @@ body {
 .date-form textarea {
   resize: vertical;
   min-height: 58px;
+}
+
+/* آیکون همیشه-نمایان برای فیلدهای تاریخ/ساعت -- بعضی مرورگرهای درون‌برنامه‌ای
+   (مثل وب‌ویوی تلگرام) آیکون بومی input رو نشون نمی‌دن و فیلد کاملاً خالی به‌نظر میاد */
+.input-icon-wrap { position: relative; }
+.input-icon {
+  position: absolute;
+  inset-inline-start: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: var(--ink-faint);
+  pointer-events: none;
+  z-index: 1;
+}
+.date-form input[type="date"],
+.date-form input[type="time"] {
+  padding-inline-start: 42px;
+  position: relative;
+}
+/* آیکون بومی مرورگر رو هم در صورت وجود، در دارک‌مود قابل‌دیدن نگه دار */
+.date-form input[type="date"]::-webkit-calendar-picker-indicator,
+.date-form input[type="time"]::-webkit-calendar-picker-indicator {
+  opacity: 0.55;
+  cursor: pointer;
+}
+html[data-theme="dark"] .date-form input[type="date"]::-webkit-calendar-picker-indicator,
+html[data-theme="dark"] .date-form input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }
 
 .hidden { display: none !important; }

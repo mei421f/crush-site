@@ -27,7 +27,12 @@ soundBtn.addEventListener('click', () => {
   soundOn = !soundOn;
   localStorage.setItem('crush-sound', soundOn ? 'on' : 'off');
   reflectSoundIcon();
-  if (soundOn) playTone(660, 0.06);
+  if (soundOn) {
+    playTone(660, 0.06);
+    startAmbientMusic();
+  } else {
+    stopAmbientMusic();
+  }
 });
 
 let audioCtx;
@@ -35,6 +40,7 @@ function playTone(freq, duration, type = 'sine') {
   if (!soundOn) return;
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = type;
@@ -50,6 +56,87 @@ function playChord() {
   playTone(523.25, 0.35);
   setTimeout(() => playTone(659.25, 0.4), 90);
   setTimeout(() => playTone(783.99, 0.5), 180);
+}
+
+// ---------- موسیقی ملایم پس‌زمینه (ساخته‌شده با Web Audio، بدون فایل خارجی) ----------
+let ambientNodes = null;
+function startAmbientMusic() {
+  if (ambientNodes || !soundOn || isPreview) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const master = audioCtx.createGain();
+    master.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    master.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 4);
+    master.connect(audioCtx.destination);
+
+    const notes = [261.63, 329.63, 392.0, 523.25]; // C4 E4 G4 C5 - آکورد ماژور نرم
+    const voices = notes.map((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const gain = audioCtx.createGain();
+      gain.gain.value = 0.02;
+      osc.connect(gain).connect(master);
+      osc.start();
+
+      // یه نوسان خیلی کند رو گین هر نُت تا حس تنفس/موج بده
+      const lfo = audioCtx.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.value = 0.045 + i * 0.011;
+      const lfoGain = audioCtx.createGain();
+      lfoGain.gain.value = 0.018;
+      lfo.connect(lfoGain).connect(gain.gain);
+      lfo.start();
+
+      return { osc, gain, lfo };
+    });
+
+    ambientNodes = { master, voices };
+  } catch (e) { /* بی‌صدا رد شو */ }
+}
+function stopAmbientMusic() {
+  if (!ambientNodes) return;
+  const { master, voices } = ambientNodes;
+  const now = audioCtx.currentTime;
+  master.gain.cancelScheduledValues(now);
+  master.gain.setValueAtTime(master.gain.value, now);
+  master.gain.linearRampToValueAtTime(0.0001, now + 1);
+  setTimeout(() => {
+    voices.forEach(v => { try { v.osc.stop(); v.lfo.stop(); } catch (e) {} });
+  }, 1100);
+  ambientNodes = null;
+}
+function tryStartMusicOnce() {
+  if (soundOn) startAmbientMusic();
+}
+['pointerdown', 'touchstart', 'keydown'].forEach(evt =>
+  document.addEventListener(evt, tryStartMusicOnce, { once: true, passive: true })
+);
+
+// ---------- قلب‌های شناور ملایم پس‌زمینه ----------
+const heartsBg = document.getElementById('hearts-bg');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function spawnHeart() {
+  const heart = document.createElement('div');
+  heart.className = 'floating-heart';
+  const size = 12 + Math.random() * 20;
+  const filled = Math.random() > 0.4;
+  heart.innerHTML = filled
+    ? '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24"><path d="M12 21s-7.2-4.4-9.7-9C.7 8.6 2 5.2 5.2 4.4 7.4 3.8 9.6 4.8 12 7.1c2.4-2.3 4.6-3.3 6.8-2.7 3.2.8 4.5 4.2 3 7.6C19.2 16.6 12 21 12 21z" fill="currentColor"/></svg>'
+    : '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24"><path d="M12 21s-7.2-4.4-9.7-9C.7 8.6 2 5.2 5.2 4.4 7.4 3.8 9.6 4.8 12 7.1c2.4-2.3 4.6-3.3 6.8-2.7 3.2.8 4.5 4.2 3 7.6C19.2 16.6 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
+  heart.style.left = Math.random() * 100 + 'vw';
+  heart.style.setProperty('--heart-opacity', (0.18 + Math.random() * 0.22).toFixed(2));
+  const duration = 10 + Math.random() * 9;
+  heart.style.animationDuration = duration + 's';
+  heartsBg.appendChild(heart);
+  setTimeout(() => heart.remove(), duration * 1000);
+}
+let heartTimer = null;
+if (!reduceMotion) {
+  heartTimer = setInterval(spawnHeart, 900);
+  for (let i = 0; i < 4; i++) setTimeout(spawnHeart, i * 300);
 }
 
 // ---------- بارگذاری تنظیمات از سرور ----------

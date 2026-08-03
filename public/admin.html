@@ -153,6 +153,7 @@
       <button class="tab-btn active" data-tab="message">پیام اصلی</button>
       <button class="tab-btn" data-tab="date">دعوت به دیت</button>
       <button class="tab-btn" data-tab="telegram">تلگرام</button>
+      <button class="tab-btn" data-tab="access">دسترسی</button>
     </div>
 
     <div class="tab-panel active" id="tab-message">
@@ -186,6 +187,20 @@
       <button type="button" class="secondary" id="testTgBtn" style="margin-top:14px;">ارسال پیام آزمایشی</button>
     </div>
 
+    <div class="tab-panel" id="tab-access">
+      <label>تاریخ/ساعت انقضای لینک <span style="color:var(--ink-faint); font-weight:400;">(اختیاری)</span></label>
+      <input type="datetime-local" id="accessExpiresAt">
+      <p class="hint">بعد از این تاریخ، لینک اصلی برای همه غیرفعال می‌شه و به‌جاش یه پیام «لینک منقضی شده» نشون داده می‌شه.</p>
+
+      <label>حداکثر تعداد بازدید <span style="color:var(--ink-faint); font-weight:400;">(اختیاری)</span></label>
+      <input type="number" id="accessMaxVisits" min="1" placeholder="مثلاً 5 (خالی = نامحدود)">
+
+      <div class="hint" style="display:flex; align-items:center; justify-content:space-between; margin-top:16px; background:var(--surface-2); padding:12px 14px; border-radius:12px;">
+        <span>تا الان بازدید شده: <strong id="visitCountLabel" style="color:var(--ink);">0</strong> بار</span>
+        <button type="button" class="secondary" id="resetVisitsBtn" style="width:auto; margin-top:0; padding:8px 14px; font-size:0.78rem;">ریست شمارنده</button>
+      </div>
+    </div>
+
     <button id="saveBtn">ذخیره کن</button>
     <div id="status"></div>
 
@@ -208,6 +223,18 @@ const passwordInput = document.getElementById('password');
 const statusEl = document.getElementById('status');
 const previewFrame = document.getElementById('previewFrame');
 const fields = ['name','question','message','dateHeading','dateMessage'];
+
+// --- کمک‌تابع تبدیل تاریخ برای input از نوع datetime-local ---
+function isoToLocalInput(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function localInputToIso(val) {
+  if (!val) return '';
+  return new Date(val).toISOString();
+}
 
 document.getElementById('publicLink').value = location.origin + '/';
 
@@ -264,6 +291,9 @@ document.getElementById('loadBtn').addEventListener('click', async () => {
     fields.forEach(f => { if (document.getElementById(f)) document.getElementById(f).value = data[f] || ''; });
     document.getElementById('telegramBotToken').value = data.telegram?.botToken || '';
     document.getElementById('telegramChatId').value = data.telegram?.chatId || '';
+    document.getElementById('accessExpiresAt').value = isoToLocalInput(data.access?.expiresAt);
+    document.getElementById('accessMaxVisits').value = data.access?.maxVisits || '';
+    document.getElementById('visitCountLabel').textContent = data.access?.visitCount || 0;
     sessionStorage.setItem('crush-admin-pass', password);
     statusEl.textContent = '✅ بارگذاری شد';
     statusEl.style.color = '#2fb350';
@@ -281,6 +311,8 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   fields.forEach(f => { body[f] = document.getElementById(f).value; });
   body.telegramBotToken = document.getElementById('telegramBotToken').value;
   body.telegramChatId = document.getElementById('telegramChatId').value;
+  body.accessExpiresAt = localInputToIso(document.getElementById('accessExpiresAt').value);
+  body.accessMaxVisits = document.getElementById('accessMaxVisits').value;
 
   statusEl.textContent = 'در حال ذخیره...';
   statusEl.style.color = 'var(--ink-soft)';
@@ -330,6 +362,30 @@ document.getElementById('testTgBtn').addEventListener('click', async () => {
   }
   btn.textContent = old;
   btn.disabled = false;
+});
+
+// --- ریست شمارنده بازدید ---
+document.getElementById('resetVisitsBtn').addEventListener('click', async () => {
+  const password = passwordInput.value;
+  try {
+    const res = await fetch('/api/admin/reset-visits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      document.getElementById('visitCountLabel').textContent = '0';
+      statusEl.textContent = '✅ شمارنده صفر شد';
+      statusEl.style.color = '#2fb350';
+    } else {
+      statusEl.textContent = '❌ ' + (data.error || 'خطا');
+      statusEl.style.color = '#ff453a';
+    }
+  } catch (e) {
+    statusEl.textContent = '❌ خطای شبکه';
+    statusEl.style.color = '#ff453a';
+  }
 });
 
 // بارگذاری خودکار اگه رمز از قبل تو سشن بود

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>لینک دیگه فعال نیست</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fbfbfd; --surface: #ffffff; --surface-2: #f5f5f7;
+    --ink: #1d1d1f; --ink-soft: #6e6e73; --ink-faint: #a1a1a6;
+    --rose: #ff375f; --border: rgba(0,0,0,0.07);
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 24px 60px -20px rgba(0,0,0,0.16);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000; --surface: #1c1c1e; --surface-2: #2c2c2e;
+      --ink: #f5f5f7; --ink-soft: #98989d; --ink-faint: #6e6e73;
+      --border: rgba(255,255,255,0.09);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Vazirmatn', sans-serif;
+    min-height: 100vh; min-height: 100svh;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg); color: var(--ink);
+    padding: 24px;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 28px; padding: 44px 32px; max-width: 380px; width: 100%;
+    text-align: center; box-shadow: var(--shadow);
+  }
+  .icon-wrap {
+    width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 50%;
+    background: var(--surface-2); display: flex; align-items: center; justify-content: center;
+  }
+  .icon-wrap svg { width: 28px; height: 28px; color: var(--rose); }
+  h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: 10px; }
+  p { color: var(--ink-soft); font-size: 0.92rem; line-height: 1.8; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon-wrap">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 8v5M12 16.5h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9.25" stroke="currentColor" stroke-width="1.6"/></svg>
+    </div>
+    <h1>این لینک دیگه فعال نیست</h1>
+    <p>این صفحه به یه محدودیت زمانی یا تعداد بازدید رسیده. اگه این لینک برای تو فرستاده شده، از فرستنده بخواه لینک تازه بده.</p>
+  </div>
+</body>
+</html>
