@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>یه چیزی برات دارم...</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="hearts-bg"></div>
+
+<div class="card" id="card">
+  <div class="stage" id="stage-question">
+    <div class="pulse-heart">❤️</div>
+    <h1 id="question-text">میشه مال من بشی؟</h1>
+    <p id="message-text" class="msg"></p>
+    <div class="btn-row">
+      <button id="yesBtn" class="btn yes">بله ❤️</button>
+      <button id="noBtn" class="btn no">نه</button>
+    </div>
+  </div>
+
+  <div class="stage hidden" id="stage-answer">
+    <div class="big-heart">💖</div>
+    <h1 id="answer-text">وای جدی؟! خیلی خوشحالم کردی 🥹</h1>
+    <p class="msg">حالا برو بهش بگو حواسش به گوشیش باشه 😏</p>
+  </div>
+</div>
+
+<canvas id="confetti"></canvas>
+
+<script src="script.js"></script>
+</body>
+</html>

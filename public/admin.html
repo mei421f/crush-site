@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>پنل مدیریت</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin:0; padding:0; font-family:'Vazirmatn',sans-serif; }
+  body {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #2b1055, #7597de);
+    padding: 20px;
+  }
+  .panel {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 420px;
+    width: 100%;
+    color: #fff;
+  }
+  h1 { text-align:center; margin-bottom: 25px; font-size: 1.4rem; }
+  label { display:block; margin: 16px 0 6px; font-size: 0.9rem; opacity:0.85; }
+  input, textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+  }
+  textarea { resize: vertical; min-height: 70px; }
+  input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.5); }
+  button {
+    margin-top: 24px;
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #ff4b6e, #ff8fab);
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  #status { text-align:center; margin-top: 14px; font-size: 0.9rem; min-height: 20px; }
+  a.preview-link { display:block; text-align:center; margin-top: 18px; color: #ffb3c6; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <h1>💌 پنل مدیریت پیام</h1>
+
+  <label>رمز ادمین</label>
+  <input type="password" id="password" placeholder="رمز عبور">
+
+  <label>اسم طرف</label>
+  <input type="text" id="name" placeholder="مثلاً سارا">
+
+  <label>سؤال</label>
+  <input type="text" id="question" placeholder="میشه مال من بشی؟">
+
+  <label>پیام دلی</label>
+  <textarea id="message" placeholder="یه چیزی هست که مدت‌هاست می‌خوام بهت بگم..."></textarea>
+
+  <button id="saveBtn">ذخیره کن</button>
+  <div id="status"></div>
+  <a class="preview-link" href="/">👀 پیش‌نمایش صفحه اصلی</a>
+</div>
+
+<script>
+async function loadCurrent() {
+  const res = await fetch('/api/config');
+  const cfg = await res.json();
+  document.getElementById('name').value = cfg.name || '';
+  document.getElementById('question').value = cfg.question || '';
+  document.getElementById('message').value = cfg.message || '';
+}
+loadCurrent();
+
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  const password = document.getElementById('password').value;
+  const name = document.getElementById('name').value;
+  const question = document.getElementById('question').value;
+  const message = document.getElementById('message').value;
+  const statusEl = document.getElementById('status');
+
+  statusEl.textContent = 'در حال ذخیره...';
+  try {
+    const res = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, name, question, message })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      statusEl.textContent = '✅ ذخیره شد!';
+      statusEl.style.color = '#8affc1';
+    } else {
+      statusEl.textContent = '❌ ' + (data.error || 'خطا');
+      statusEl.style.color = '#ff8f8f';
+    }
+  } catch (e) {
+    statusEl.textContent = '❌ خطای شبکه';
+    statusEl.style.color = '#ff8f8f';
+  }
+});
+</script>
+</body>
+</html>
